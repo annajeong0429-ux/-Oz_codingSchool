@@ -21,3 +21,9 @@ envs/
 .env
 
 .python-version
+.# Custom ignore patterns
+.*
+_*
+
+# Don't ignore the .gitignore file itself
+!.gitignore
