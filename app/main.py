@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
+# 추가한 Import  
+from app.apis import practice_apis
+
 app = FastAPI()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,6 +23,8 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 # 'media' 폴더를 '/media' 경로로 마운트 (사용자 업로드 파일 서빙용)
 app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
+# Router등록
+app.include_router(practice_apis.router)
 
 @app.get(path="/healthcheck", status_code=200, include_in_schema=False)
 async def healthcheck():
@@ -43,3 +48,4 @@ async def catch_all(path: str):
 
         raise HTTPException(status_code=404)
     return FileResponse(BASE_DIR / "static" / "index.html")
+
