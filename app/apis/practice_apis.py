@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
+from typing import Optional
 import re   # 정규표현식(이메일·비밀번호 검사)용
 
 
@@ -55,6 +56,35 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def check_password(cls, value):
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("비밀번호에 대문자가 1개 이상 필요합니다.")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("비밀번호에 소문자가 1개 이상 필요합니다.")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise ValueError("비밀번호에 특수문자가 1개 이상 필요합니다.")
+        return value
+
+# 4번에서 입력받을 데이터의 틀 (모든 항목 선택 입력)
+class UserUpdate(BaseModel):
+    age: Optional[int] = Field(default=None, ge=14)
+    email: Optional[str] = Field(default=None, max_length=30)
+    password: Optional[str] = Field(default=None, min_length=8, max_length=20)
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, value):
+        if value is None:
+            return value
+        pattern = r"^[\w.-]+@[\w.-]+\.\w+$"
+        if not re.match(pattern, value):
+            raise ValueError("올바른 이메일 형식이 아닙니다.")
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def check_password(cls, value):
+        if value is None:
+            return value
         if not re.search(r"[A-Z]", value):
             raise ValueError("비밀번호에 대문자가 1개 이상 필요합니다.")
         if not re.search(r"[a-z]", value):
@@ -122,3 +152,26 @@ def create_user_handler(user: UserCreate):   # 위에서 만든 틀로 입력값
     }
     user_list.append(new_user)
     return new_user
+
+# 4번. 회원 정보 수정 API
+@router.patch(
+        "/practice_api/users/{user_id}",
+        summary="회원 정보 수정 API",
+        response_model=UserResponse,
+        )
+def update_user_handler(user_id: int, user_update: UserUpdate):
+    # 모든 항목이 비어있으면 400 반환
+    if user_update.age is None and user_update.email is None and user_update.password is None:
+        raise HTTPException(status_code=400, detail="최소 하나의 항목을 입력해야 합니다.")
+
+    for user in user_list:
+        if user["id"] == user_id:
+            if user_update.age is not None:
+                user["age"] = user_update.age
+            if user_update.email is not None:
+                user["email"] = user_update.email
+            if user_update.password is not None:
+                user["password"] = user_update.password
+            return user
+
+    raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
