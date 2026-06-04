@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field, field_validator
+import re   # 정규표현식(이메일·비밀번호 검사)용
 
 
 # 라우터(Router) 생성하기 
@@ -29,7 +31,94 @@ user_list = [
     }
 ]
 
+# 3번에서 입력받을 데이터의 "틀" + 검증 규칙
+class UserCreate(BaseModel):
+    # 이름: 2~10글자
+    name: str = Field(min_length=2, max_length=10)
+    # 나이: 14 이상 (ge = greater than or equal)
+    age: int = Field(ge=14)
+    # 이메일: 최대 30자 (형식·중복은 아래에서 따로 검사)
+    email: str = Field(max_length=30)
+    # 비밀번호: 8~20자 (대소문자·특수문자 포함 여부는 아래에서 검사)
+    password: str = Field(min_length=8, max_length=20)
+
+    # 이메일 형식을 정규표현식으로 검사
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, value):
+        pattern = r"^[\w.-]+@[\w.-]+\.\w+$"
+        if not re.match(pattern, value):
+            raise ValueError("올바른 이메일 형식이 아닙니다.")
+        return value
+
+    # 비밀번호에 대문자·소문자·특수문자가 각각 1개 이상 있는지 검사
+    @field_validator("password")
+    @classmethod
+    def check_password(cls, value):
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("비밀번호에 대문자가 1개 이상 필요합니다.")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("비밀번호에 소문자가 1개 이상 필요합니다.")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise ValueError("비밀번호에 특수문자가 1개 이상 필요합니다.")
+        return value
+
+# 응답으로 내보낼 데이터의 틀 (password 제외 → 자동으로 안 나감)
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    age: int
+    email: str
+
 # 모든 회원의 정보를 목록으로 조회하는 API
-@router.get("/practice_api/users")
-def get_all_users():
+# 1번 (다이님 것에 변경 규칙 적용 시)
+@router.get(
+        "/practice_api/users", 
+        summary="모든 회원 목록 조회",
+        response_model=list[UserResponse],
+        )   # 목록이라 list[...]
+def get_all_users_handler():
     return user_list
+
+# 2번. 특정 회원 조회 API
+# 주소의 {user_id} 자리에 들어온 숫자를 user_id로 받음 (: int → 숫자만 허용)
+@router.get(
+        "/practice_api/users/{user_id}",
+        summary="특정 회원 조회 API",
+        response_model=UserResponse,
+        )
+def get_user_handler(user_id: int):
+    # user_list를 하나씩 돌면서 id가 일치하는 회원을 찾음
+    for user in user_list:
+        if user["id"] == user_id:
+            return user
+    # 끝까지 못 찾으면 404 응답
+    raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+
+# 3번. 회원 추가 API
+@router.post(
+        "/practice_api/users",
+        summary="회원 추가 API",
+        response_model=UserResponse,
+        )
+def create_user_handler(user: UserCreate):   # 위에서 만든 틀로 입력값이 자동 검증됨
+    # 이메일 중복 검사 (틀에서는 못 하니 여기서)
+    for existing in user_list:
+        if existing["email"] == user.email:
+            raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
+
+    # id 자동 증가: 기존 id 중 가장 큰 값 + 1 (목록이 비어있으면 1)
+    # 추후 DB 연결 시 id는 DB에서 자동 생성(AUTO_INCREMENT)되므로 이 로직은 제거 예정.
+    # TODO: DB 연결 시 자동 생성으로 교체
+    new_id = max((u["id"] for u in user_list), default=0) + 1
+
+    # 새 회원을 딕셔너리로 만들어 목록에 추가
+    new_user = {
+        "id": new_id,
+        "name": user.name,
+        "age": user.age,
+        "email": user.email,
+        "password": user.password,
+    }
+    user_list.append(new_user)
+    return new_user
