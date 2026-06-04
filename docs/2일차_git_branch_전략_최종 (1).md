@@ -211,8 +211,8 @@ git log --oneline --graph        # 커밋 이력 그래프로 확인
 
 ### 개요
 
-Git Flow의 체계적인 버전 관리와 GitHub Flow의 단순함을 결합한 **하이브리드 전략**을 사용한다.
-`main → develop → 부모 feature → 자식 feature` 구조로 운영하여
+**GitHub Flow 하이브리드 전략**을 사용한다.
+`main → develop → 자식 feature` 구조로 운영하여
 팀원별 작업을 명확히 분리하면서도 기능 단위로 안정적으로 통합한다.
 
 ### 브랜치 구조
@@ -221,10 +221,7 @@ Git Flow의 체계적인 버전 관리와 GitHub Flow의 단순함을 결합한 
 main
 │   배포 가능한 안정 버전 (직접 push 금지)
 │
-develop
-│   개발 통합 브랜치
-│
-└── feature/기능명 (부모 브랜치)
+└── develop 개발 통합 브랜치
         │   하나의 기능 단위를 묶는 브랜치
         │
         ├── feature/기능명-홍길동 (자식 브랜치)
@@ -237,12 +234,8 @@ develop
 ```
 develop
     ↓  분기
-feature/기능명 (부모) ← 기능 단위로 묶는 브랜치
-    ↓  분기
 feature/기능명-팀원명 (자식) ← 팀원이 자유롭게 개발
-    ↓  PR & Merge (자식 → 부모)
-feature/기능명 (부모) ← 통합 테스트
-    ↓  PR & Merge (부모 → develop)
+    ↓  PR & Merge (자식 → develop)
 develop ← 개발 통합
     ↓  PR & Merge (develop → main)
 main ← 배포
@@ -251,15 +244,13 @@ main ← 배포
 ### 실전 명령어
 
 ```bash
-# ======== 팀장: 부모 브랜치 생성 ========
+# ======== 팀장: develop 브랜치 생성 ========
 git switch develop
 git pull origin develop
-git switch -c feature/user-api
-git push origin feature/user-api
 
 # ======== 팀원: 자식 브랜치 생성 & 개발 ========
 git switch feature/user-api
-git pull origin feature/user-api
+git pull origin develop
 git switch -c feature/user-api-홍길동
 
 # 자유롭게 개발 후
@@ -268,23 +259,14 @@ git commit -m "✨ feat: 회원 조회 API 구현"
 git push origin feature/user-api-홍길동
 
 # GitHub에서 PR 생성
-# base: feature/user-api (부모)
+# base: develop
 # compare: feature/user-api-홍길동 (자식)
 
-# ======== 부모 → develop Merge ========
-# 자식들이 모두 부모로 Merge된 후
-# GitHub에서 PR 생성
-# base: develop
-# compare: feature/user-api (부모)
 ```
 
 ### 브랜치 네이밍 규칙
 
 ```
-# 부모 브랜치
-feature/기능명
-예) feature/user-api, feature/xray-predict
-
 # 자식 브랜치
 feature/기능명-팀원명
 예) feature/user-api-홍길동, feature/xray-predict-김철수
@@ -310,11 +292,9 @@ git commit -m "[#10] ✨ feat: 폐렴 판독 API 추가"
 ### PR 흐름 한눈에 보기
 
 ```
-자식 브랜치 → 부모 브랜치  (PR #1: 팀원 코드 리뷰)
+자식 브랜치 → develop  (PR: 팀원 코드 리뷰)
                   ↓
-부모 브랜치 → develop      (PR #2: 기능 통합 리뷰)
-                  ↓
-develop     → main         (PR #3: 최종 배포 리뷰)
+develop     → main         (PR #2: 최종 배포 리뷰)
 ```
 
 ### 장단점
@@ -322,13 +302,12 @@ develop     → main         (PR #3: 최종 배포 리뷰)
 | 장점 | 단점 |
 |------|------|
 | 팀원별 작업이 명확히 분리됨 | 브랜치 depth가 깊어짐 |
-| 충돌 범위가 좁아져 해결이 쉬움 | PR이 2단계라 시간이 걸림 |
+| 충돌 범위가 좁아져 해결이 쉬움 | PR때문에 시간이 걸림 |
 | 코드 리뷰를 더 세밀하게 진행 가능 | 처음엔 복잡하게 느껴질 수 있음 |
 | 자식 브랜치에서 자유롭게 실험 가능 | |
 
 > 💡 **팁**: 자식 브랜치에서는 자유롭게 개발하고,
-> 부모 브랜치로 Merge할 때 코드 리뷰를 통해 품질을 검증하자!
-> develop으로 올라가는 코드는 항상 검증된 상태여야 한다.
+> develop으로 Merge할 때 코드 리뷰를 통해 품질을 검증하자!
 
 ---
 
