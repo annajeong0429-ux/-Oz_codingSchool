@@ -9,9 +9,11 @@
 | 1 | 회원가입 | POST | `/api/v1/auth/register/` | N |
 | 2 | 로그인 | POST | `/api/v1/auth/login/` | N |
 | 3 | 로그아웃 | POST | `/api/v1/auth/logout/` | Y |
-| 4 | 내 정보 조회 | GET | `/api/v1/users/me/` | Y |
-| 5 | 내 정보 수정 | PATCH | `/api/v1/users/me/` | Y |
-| 6 | 회원 탈퇴 | DELETE | `/api/v1/users/me/` | Y |
+| 4 | 회원 목록 조회 | GET | `/api/v1/users/` | Y |
+| 5 | 내 정보 조회 | GET | `/api/v1/users/me/` | Y |
+| 6 | 내 정보 수정 | PATCH | `/api/v1/users/me/` | Y |
+| 7 | 비밀번호 변경 | PATCH | `/api/v1/users/me/password/` | Y |
+| 8 | 회원 탈퇴 | DELETE | `/api/v1/users/me/` | Y |
 
 ---
 
@@ -231,15 +233,15 @@
 
 ---
 
-## 4. 내 정보 조회 API
+## 4. 회원 목록 조회 API
 
 ### 4-1. API 개요
 
 | 항목 | 내용 |
 |------|------|
-| API 이름 | 내 정보 조회 API |
-| 설명 | 현재 로그인된 사용자의 정보를 조회하는 API |
-| 엔드포인트 | `/api/v1/users/me/` |
+| API 이름 | 회원 목록 조회 API |
+| 설명 | 전체 회원 목록을 조회하는 API |
+| 엔드포인트 | `/api/v1/users/` |
 | 메서드 | `GET` |
 | 인증 필요 여부 | Y |
 
@@ -252,6 +254,66 @@
 | Authorization | Bearer \<access_token\> | JWT 액세스 토큰 |
 
 ### 4-3. 응답(Response)
+
+#### 성공 - 200 OK
+
+```json
+[
+  {
+    "id": 1,
+    "email": "example@example.com",
+    "name": "홍길동",
+    "created_at": "2025-01-01T00:00:00"
+  },
+  {
+    "id": 2,
+    "email": "example2@example.com",
+    "name": "김철수",
+    "created_at": "2025-01-02T00:00:00"
+  }
+]
+```
+
+| 필드명 | 타입 | 설명 |
+|--------|------|------|
+| id | integer | 사용자 고유 ID |
+| email | string | 사용자 이메일 |
+| name | string | 사용자 이름 |
+| created_at | string | 가입일시 |
+
+#### 실패
+
+- **401 Unauthorized**
+
+```json
+{
+  "detail": "인증이 필요합니다."
+}
+```
+
+---
+
+## 5. 내 정보 조회 API (마이페이지)
+
+### 5-1. API 개요
+
+| 항목 | 내용 |
+|------|------|
+| API 이름 | 내 정보 조회 API |
+| 설명 | 현재 로그인된 사용자의 정보를 조회하는 API |
+| 엔드포인트 | `/api/v1/users/me/` |
+| 메서드 | `GET` |
+| 인증 필요 여부 | Y |
+
+### 5-2. 요청(Request)
+
+#### Headers
+
+| Key | Value | 설명 |
+|-----|-------|------|
+| Authorization | Bearer \<access_token\> | JWT 액세스 토큰 |
+
+### 5-3. 응답(Response)
 
 #### 성공 - 200 OK
 
@@ -285,19 +347,19 @@
 
 ---
 
-## 5. 내 정보 수정 API
+## 6. 내 정보 수정 API
 
-### 5-1. API 개요
+### 6-1. API 개요
 
 | 항목 | 내용 |
 |------|------|
 | API 이름 | 내 정보 수정 API |
-| 설명 | 현재 로그인된 사용자의 정보를 수정하는 API |
+| 설명 | 현재 로그인된 사용자의 이름 등 기본 정보를 수정하는 API |
 | 엔드포인트 | `/api/v1/users/me/` |
 | 메서드 | `PATCH` |
 | 인증 필요 여부 | Y |
 
-### 5-2. 요청(Request)
+### 6-2. 요청(Request)
 
 #### Headers
 
@@ -310,8 +372,7 @@
 
 ```json
 {
-  "name": "새이름",
-  "password": "NewPassword1234!"
+  "name": "새이름"
 }
 ```
 
@@ -320,9 +381,8 @@
 | 파라미터명 | 타입 | 필수 | 설명 |
 |-----------|------|------|------|
 | name | string | N | 변경할 이름 (2~10글자) |
-| password | string | N | 변경할 비밀번호 (대소문자+특수문자 포함, 8~20자) |
 
-### 5-3. 응답(Response)
+### 6-3. 응답(Response)
 
 #### 성공 - 200 OK
 
@@ -348,13 +408,81 @@
 | 에러 코드 | 설명 |
 |----------|------|
 | empty_fields | 수정할 항목이 하나도 없는 경우 |
-| invalid_password | 비밀번호 형식이 올바르지 않은 경우 |
 
 ---
 
-## 6. 회원 탈퇴 API
+## 7. 비밀번호 변경 API
 
-### 6-1. API 개요
+### 7-1. API 개요
+
+| 항목 | 내용 |
+|------|------|
+| API 이름 | 비밀번호 변경 API |
+| 설명 | 현재 로그인된 사용자의 비밀번호를 변경하는 API |
+| 엔드포인트 | `/api/v1/users/me/password/` |
+| 메서드 | `PATCH` |
+| 인증 필요 여부 | Y |
+
+### 7-2. 요청(Request)
+
+#### Headers
+
+| Key | Value | 설명 |
+|-----|-------|------|
+| Content-Type | application/json | 요청 타입 |
+| Authorization | Bearer \<access_token\> | JWT 액세스 토큰 |
+
+#### 본문 예시
+
+```json
+{
+  "current_password": "OldPassword1234!",
+  "new_password": "NewPassword1234!"
+}
+```
+
+#### 본문 필드
+
+| 파라미터명 | 타입 | 필수 | 설명 |
+|-----------|------|------|------|
+| current_password | string | Y | 현재 비밀번호 (본인 확인용) |
+| new_password | string | Y | 변경할 비밀번호 (대소문자+특수문자 포함, 8~20자) |
+
+### 7-3. 응답(Response)
+
+#### 성공 - 200 OK
+
+```json
+{
+  "message": "비밀번호가 변경되었습니다."
+}
+```
+
+#### 실패
+
+- **400 Bad Request**
+
+```json
+{
+  "detail": "현재 비밀번호가 일치하지 않습니다."
+}
+```
+
+| 에러 코드 | 설명 |
+|----------|------|
+| invalid_current_password | 현재 비밀번호가 잘못된 경우 |
+| invalid_new_password | 새 비밀번호 형식이 올바르지 않은 경우 |
+| same_as_current | 새 비밀번호가 현재 비밀번호와 동일한 경우 |
+
+### 7-4. 비고
+- 비밀번호 변경 후 기존 토큰은 그대로 유지됩니다.
+- 새 비밀번호는 현재 비밀번호와 달라야 합니다.
+
+---
+
+## 8. 회원 탈퇴 API
+
+### 8-1. API 개요
 
 | 항목 | 내용 |
 |------|------|
@@ -364,7 +492,7 @@
 | 메서드 | `DELETE` |
 | 인증 필요 여부 | Y |
 
-### 6-2. 요청(Request)
+### 8-2. 요청(Request)
 
 #### Headers
 
@@ -386,7 +514,7 @@
 |-----------|------|------|------|
 | password | string | Y | 현재 비밀번호 (본인 확인용) |
 
-### 6-3. 응답(Response)
+### 8-3. 응답(Response)
 
 #### 성공 - 200 OK
 
@@ -406,7 +534,7 @@
 }
 ```
 
-### 6-4. 비고
+### 8-4. 비고
 - 탈퇴 시 관련 데이터(환자 기록 등)는 보존됩니다.
 
 ---
