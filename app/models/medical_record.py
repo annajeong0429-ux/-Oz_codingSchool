@@ -8,6 +8,7 @@ class MedicalRecord(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     patient_id = Column(BigInteger, ForeignKey("patients.id"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
     chart_number = Column(String(50), unique=True, nullable=False)
     symptoms = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
