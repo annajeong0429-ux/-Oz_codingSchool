@@ -1,23 +1,10 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, Enum
+from sqlalchemy import Column, BigInteger, String, Boolean, Enum
 from sqlalchemy.orm import relationship
 from app.core.db.databases import Base
-import enum
-from datetime import datetime
+from app.core.db.models import TimestampMixin
+from app.models.enums import GenderEnum, DepartmentEnum, RoleEnum
 
-class GenderEnum(str, enum.Enum):
-    male = "male"
-    female = "female"
-
-class DepartmentEnum(str, enum.Enum):
-    radiology = "radiology"
-    internal = "internal"
-    emergency = "emergency"
-
-class RoleEnum(str, enum.Enum):
-    admin = "admin"
-    doctor = "doctor"
-
-class User(Base):
+class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -29,6 +16,3 @@ class User(Base):
     department = Column(Enum(DepartmentEnum), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.now)
-

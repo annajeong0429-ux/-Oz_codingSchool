@@ -1,8 +1,8 @@
-"""create tables v4
+"""create tables v5
 
-Revision ID: 8e35f40316af
+Revision ID: 62fdbffda729
 Revises: 
-Create Date: 2026-06-08 11:47:31.957558
+Create Date: 2026-06-08 17:37:53.694055
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8e35f40316af'
+revision: str = '62fdbffda729'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,8 +27,8 @@ def upgrade() -> None:
     sa.Column('age', sa.SmallInteger(), nullable=False),
     sa.Column('gender', sa.Enum('male', 'female', name='genderenum'), nullable=False),
     sa.Column('phone', sa.String(length=11), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -41,8 +41,8 @@ def upgrade() -> None:
     sa.Column('department', sa.Enum('radiology', 'internal', 'emergency', name='departmentenum'), nullable=False),
     sa.Column('role', sa.Enum('admin', 'doctor', name='roleenum'), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('phone_number')
@@ -53,8 +53,8 @@ def upgrade() -> None:
     sa.Column('user_id', sa.BigInteger(), nullable=False),
     sa.Column('chart_number', sa.String(length=50), nullable=False),
     sa.Column('symptoms', sa.Text(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=True),
     sa.ForeignKeyConstraint(['patient_id'], ['patients.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -67,8 +67,8 @@ def upgrade() -> None:
     sa.Column('confidence', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.Column('heatmap_url', sa.String(length=255), nullable=False),
     sa.Column('ai_model', sa.String(length=50), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=True),
     sa.ForeignKeyConstraint(['record_id'], ['medical_records.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -78,7 +78,8 @@ def upgrade() -> None:
     sa.Column('uploader_id', sa.BigInteger(), nullable=False),
     sa.Column('image_url', sa.String(length=2048), nullable=False),
     sa.Column('shooting_datetime', sa.DateTime(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('current_timestamp(0)'), nullable=True),
     sa.ForeignKeyConstraint(['record_id'], ['medical_records.id'], ),
     sa.ForeignKeyConstraint(['uploader_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
