@@ -32,4 +32,3 @@ class User(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.now)
 
-    medical_records = relationship("MedicalRecord", back_populates="user")

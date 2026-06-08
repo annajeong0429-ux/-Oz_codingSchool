@@ -14,6 +14,5 @@ class MedicalRecord(Base):
     updated_at = Column(DateTime, onupdate=datetime.now)
 
     patient = relationship("Patient", back_populates="medical_records")
-    user = relationship("User", back_populates="medical_records")
     xray_images = relationship("XrayImage", back_populates="medical_record")
     ai_analysis_results = relationship("AiAnalysisResult", back_populates="medical_record")
