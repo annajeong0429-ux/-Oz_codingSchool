@@ -27,3 +27,6 @@ _*
 
 # Don't ignore the .gitignore file itself
 !.gitignore
+
+# AI 모델 가중치 파일
+*.pth
