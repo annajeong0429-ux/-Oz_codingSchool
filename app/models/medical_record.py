@@ -13,5 +13,6 @@ class MedicalRecord(Base, TimestampMixin):
     symptoms = Column(Text, nullable=False)
 
     patient = relationship("Patient", back_populates="medical_records")
+    user = relationship("User", back_populates="medical_records")   # ← 이 줄 추가!
     xray_images = relationship("XrayImage", back_populates="medical_record")
     ai_analysis_results = relationship("AiAnalysisResult", back_populates="medical_record")

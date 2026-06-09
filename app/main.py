@@ -8,6 +8,7 @@ from starlette.responses import FileResponse
 # 추가한 Import  
 from app.apis import practice_apis
 from app.apis import user_apis
+from app.apis import patient_apis
 
 app = FastAPI()
 
@@ -27,6 +28,7 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 # Router등록
 app.include_router(practice_apis.router)
 app.include_router(user_apis.router)
+app.include_router(patient_apis.router) 
 
 @app.get(path="/healthcheck", status_code=200, include_in_schema=False)
 async def healthcheck():
