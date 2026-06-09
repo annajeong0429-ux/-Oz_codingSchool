@@ -33,9 +33,11 @@ async def list_patients(
 
 # 수정 (REQ-PTNT-004)
 async def modify_patient(db: AsyncSession, patient_id: int, data: PatientUpdate) -> Patient:
-    patient = await get_patient_or_404(db, patient_id)   # 먼저 존재 확인(없으면 404)
+    # 수정할 항목이 하나도 없으면 400
+    if data.name is None and data.phone is None:
+        raise HTTPException(status_code=400, detail="최소 하나의 항목을 입력해야 합니다.")
+    patient = await get_patient_or_404(db, patient_id)
     return await repo.update_patient(db, patient, data)
-
 
 # 삭제 (REQ-PTNT-005)
 async def remove_patient(db: AsyncSession, patient_id: int) -> None:
