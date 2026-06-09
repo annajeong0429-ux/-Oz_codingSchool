@@ -221,6 +221,11 @@ async def delete_me(user_id: int, user_delete: UserDelete, db: AsyncSession = De
         raise HTTPException(status_code=400, detail="비밀번호가 일치하지 않습니다.")
 
     # 하드 삭제 (REQ-USER-009: 즉시 삭제)
-    await db.delete(user)
-    await db.commit()
+    # 진료기록의 user_id는 SET NULL 처리됨 (ran님 모델 변경 반영)
+    try:
+        await db.delete(user)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="삭제 처리 중 오류가 발생했습니다.")
     return {"message": "회원 탈퇴가 완료되었습니다."}
