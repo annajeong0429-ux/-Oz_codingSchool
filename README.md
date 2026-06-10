@@ -21,3 +21,6 @@ uv run alembic upgrade head
 ```bash
 uv run alembic downgrade -1
 ```
+
+### 4. 모델 가중치 크기 문제로 가중치 파일 링크 공유합니다.
+https://drive.google.com/drive/folders/1x8TnELyNyFajk-VBzJw8z21yUm1EDKDR?usp=sharing
