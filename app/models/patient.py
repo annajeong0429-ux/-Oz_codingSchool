@@ -13,4 +13,9 @@ class Patient(Base, TimestampMixin):
     gender = Column(Enum(GenderEnum), nullable=False)
     phone = Column(String(11), nullable=False)
 
-    medical_records = relationship("MedicalRecord", back_populates="patient")
+    medical_records = relationship(
+        "MedicalRecord",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
