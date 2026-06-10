@@ -222,12 +222,16 @@ def predict_pneumonia(image_bytes: bytes) -> dict:
     model_type = "convnext" if convnext_probs[1] >= densenet_probs[1] else "densenet"
     class_idx = 1  # 폐렴 클래스
 
-    # grad-cam은 gradient 필요하므로 no_grad 밖에서 실행
-    img_tensor_grad = val_tf(image).unsqueeze(0).to(DEVICE)
-    img_tensor_grad.requires_grad_(True)
-    heatmap_url = _generate_heatmap_base64(
-        best_model, img_tensor_grad, model_type, class_idx, original_size
-    )
+# grad-cam은 gradient 필요하므로 no_grad 밖에서 실행
+    try:
+        img_tensor_grad = val_tf(image).unsqueeze(0).to(DEVICE)
+        img_tensor_grad.requires_grad_(True)
+        heatmap_url = _generate_heatmap_base64(
+            best_model, img_tensor_grad, model_type, class_idx, original_size
+        )
+    except Exception as e:
+        print(f"Grad-CAM 생성 실패: {e}")
+        heatmap_url = None
 
     return {
         "is_pneumonia": is_pneumonia,
