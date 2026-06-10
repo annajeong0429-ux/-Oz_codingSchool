@@ -7,8 +7,8 @@ class XrayImage(Base, TimestampMixin):
     __tablename__ = "xray_images"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    record_id = Column(BigInteger, ForeignKey("medical_records.id"), nullable=False)
-    uploader_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
+    record_id = Column(BigInteger, ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False)
+    uploader_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)   # ← nullable True!
     image_url = Column(String(2048), nullable=False)
     shooting_datetime = Column(DateTime, nullable=False)
 

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, field_validator
-import re   # 정규표현식(이메일·비밀번호 검사)용
+
+# 데이터 구조 틀(스키마)은 별도 파일로 분리하여 import
+from app.schemas.practice_schemas import UserCreate, UserUpdate, UserResponse
 
 
-# 라우터(Router) 생성하기 
+# 라우터(Router) 생성하기
 router = APIRouter()
 
 #app/apis/practice_apis.py
@@ -30,45 +31,6 @@ user_list = [
         "password": "lwsPAssword12@"
     }
 ]
-
-# 3번에서 입력받을 데이터의 "틀" + 검증 규칙
-class UserCreate(BaseModel):
-    # 이름: 2~10글자
-    name: str = Field(min_length=2, max_length=10)
-    # 나이: 14 이상 (ge = greater than or equal)
-    age: int = Field(ge=14)
-    # 이메일: 최대 30자 (형식·중복은 아래에서 따로 검사)
-    email: str = Field(max_length=30)
-    # 비밀번호: 8~20자 (대소문자·특수문자 포함 여부는 아래에서 검사)
-    password: str = Field(min_length=8, max_length=20)
-
-    # 이메일 형식을 정규표현식으로 검사
-    @field_validator("email")
-    @classmethod
-    def check_email(cls, value):
-        pattern = r"^[\w.-]+@[\w.-]+\.\w+$"
-        if not re.match(pattern, value):
-            raise ValueError("올바른 이메일 형식이 아닙니다.")
-        return value
-
-    # 비밀번호에 대문자·소문자·특수문자가 각각 1개 이상 있는지 검사
-    @field_validator("password")
-    @classmethod
-    def check_password(cls, value):
-        if not re.search(r"[A-Z]", value):
-            raise ValueError("비밀번호에 대문자가 1개 이상 필요합니다.")
-        if not re.search(r"[a-z]", value):
-            raise ValueError("비밀번호에 소문자가 1개 이상 필요합니다.")
-        if not re.search(r"[^A-Za-z0-9]", value):
-            raise ValueError("비밀번호에 특수문자가 1개 이상 필요합니다.")
-        return value
-
-# 응답으로 내보낼 데이터의 틀 (password 제외 → 자동으로 안 나감)
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    age: int
-    email: str
 
 # 모든 회원의 정보를 목록으로 조회하는 API
 # 1번 (다이님 것에 변경 규칙 적용 시)
@@ -122,3 +84,41 @@ def create_user_handler(user: UserCreate):   # 위에서 만든 틀로 입력값
     }
     user_list.append(new_user)
     return new_user
+
+# 4번. 회원 정보 수정 API
+@router.patch(
+        "/practice_api/users/{user_id}",
+        summary="회원 정보 수정 API",
+        response_model=UserResponse,
+        )
+def update_user_handler(user_id: int, user_update: UserUpdate):
+    # 모든 항목이 비어있으면 400 반환
+    if user_update.age is None and user_update.email is None and user_update.password is None:
+        raise HTTPException(status_code=400, detail="최소 하나의 항목을 입력해야 합니다.")
+
+    for user in user_list:
+        if user["id"] == user_id:
+            if user_update.age is not None:
+                user["age"] = user_update.age
+            if user_update.email is not None:
+                user["email"] = user_update.email
+            if user_update.password is not None:
+                user["password"] = user_update.password
+            return user
+
+    raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+
+# 5번. 회원 삭제 API
+@router.delete(
+        "/practice_api/users/{user_id}",
+        summary="회원 삭제 API",
+        response_model=UserResponse,
+        )
+def delete_user_handler(user_id: int):
+    # user_list를 하나씩 돌면서 id가 일치하는 회원을 찾음
+    for user in user_list:
+        if user["id"] == user_id:
+            user_list.remove(user)   # 목록에서 해당 회원 제거
+            return user              # 삭제된 회원 정보를 반환 (2·3·4번과 동일하게 password 제외)
+    # 끝까지 못 찾으면 404 응답 (2·4번과 동일한 문구로 통일)
+    raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")

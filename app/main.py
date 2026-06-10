@@ -30,6 +30,8 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 app.include_router(practice_apis.router)
+app.include_router(user_apis.router)
+app.include_router(patient_apis.router) 
 
 @app.get(path="/healthcheck", status_code=200, include_in_schema=False)
 async def healthcheck():

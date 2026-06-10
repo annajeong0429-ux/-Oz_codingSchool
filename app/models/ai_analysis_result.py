@@ -7,7 +7,7 @@ class AiAnalysisResult(Base, TimestampMixin):
     __tablename__ = "ai_analysis_results"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    record_id = Column(BigInteger, ForeignKey("medical_records.id"), nullable=False)
+    record_id = Column(BigInteger, ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False)
     is_pneumonia = Column(Boolean, nullable=False)
     confidence = Column(Numeric(5, 2), nullable=False)
     heatmap_url = Column(String(255), nullable=False)

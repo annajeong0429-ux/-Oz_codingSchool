@@ -6,7 +6,6 @@ from app.models.enums import GenderEnum, DepartmentEnum, RoleEnum
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
-
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -16,3 +15,4 @@ class User(Base, TimestampMixin):
     department = Column(Enum(DepartmentEnum), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
+    medical_records = relationship("MedicalRecord", back_populates="user")
