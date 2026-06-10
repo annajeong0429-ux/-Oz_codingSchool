@@ -2,24 +2,9 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 import re
-import enum
 
-
-# ── Enum ──────────────────────────────────────────────
-class GenderEnum(str, enum.Enum):
-    male = "male"
-    female = "female"
-
-
-class DepartmentEnum(str, enum.Enum):
-    radiology = "radiology"
-    internal = "internal"
-    emergency = "emergency"
-
-
-class RoleEnum(str, enum.Enum):
-    admin = "admin"
-    doctor = "doctor"
+# Enum은 models/enums.py에서 import (중복 제거)
+from app.models.enums import GenderEnum, DepartmentEnum, RoleEnum
 
 
 # ── 회원가입 요청 ──────────────────────────────────────
@@ -30,7 +15,7 @@ class UserCreate(BaseModel):
     phone_number: str = Field(max_length=20)
     gender: GenderEnum
     department: DepartmentEnum
-    role: RoleEnum
+    # role은 가입 시 자동으로 pending 설정 (REQ-USER-005)
 
     @field_validator("email")
     @classmethod
@@ -63,9 +48,9 @@ class UserLogout(BaseModel):
     refresh_token: str
 
 
-# ── 내 정보 수정 요청 ──────────────────────────────────
+# ── 내 정보 수정 요청 (부서 + 휴대폰번호) ──────────────
 class UserUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=2, max_length=20)
+    department: Optional[DepartmentEnum] = None
     phone_number: Optional[str] = Field(default=None, max_length=20)
 
 
@@ -95,7 +80,7 @@ class UserDelete(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
-    name: str
+    name: Optional[str] = None  # 모델 nullable과 일치
     phone_number: Optional[str] = None
     gender: GenderEnum
     department: DepartmentEnum
