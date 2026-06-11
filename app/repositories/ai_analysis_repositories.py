@@ -21,11 +21,11 @@ async def get_by_record_and_model(
 
 
 # 목록 조회 (REQ-PRED-002): 해당 진료기록의 모든 예측 결과
-async def list_by_record(
-    db: AsyncSession, record_id: int
-) -> list[AiAnalysisResult]:
+async def list_by_record(db: AsyncSession, record_id: int) -> list[AiAnalysisResult]:
     result = await db.execute(
-        select(AiAnalysisResult).where(AiAnalysisResult.record_id == record_id)
+        select(AiAnalysisResult)
+        .where(AiAnalysisResult.record_id == record_id)
+        .order_by(AiAnalysisResult.created_at.desc())   # ← 추가 (최신순)
     )
     return list(result.scalars().all())
 

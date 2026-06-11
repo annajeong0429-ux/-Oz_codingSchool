@@ -20,9 +20,13 @@ async def predict_or_get_cached(db: AsyncSession, record_id: int):
 
     # 2. 대표 X-ray 1장 조회 (여러 장이면 id 작은 것 = 대표) — 없으면 404
     xray_result = await db.execute(
-        select(XrayImage).where(XrayImage.record_id == record_id).order_by(XrayImage.id)
+        select(XrayImage)
+        .where(XrayImage.record_id == record_id)
+        .order_by(XrayImage.id)
+        .limit(1)   # ← 추가 (대표 1장만 DB에서)
     )
     xray = xray_result.scalars().first()
+
     if xray is None:
         raise HTTPException(status_code=404, detail="예측할 X-Ray 이미지가 없습니다.")
 
