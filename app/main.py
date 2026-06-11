@@ -7,9 +7,10 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 from app.apis import practice_apis
-from app.apis import user_apis          # ← 누락됐던 import 복구
-from app.apis import patient_apis       # ← 누락됐던 import 복구
-from app.apis import ai_analysis_apis   # ← 새로 추가
+from app.apis import user_apis          
+from app.apis import patient_apis       
+from app.apis import ai_analysis_apis   
+from app.apis import medical_record_apis
 from app.worker.model import load_models
 
 
@@ -36,7 +37,8 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 app.include_router(practice_apis.router)
 app.include_router(user_apis.router)
 app.include_router(patient_apis.router)
-app.include_router(ai_analysis_apis.router)   # ← 새로 추가
+app.include_router(ai_analysis_apis.router)   
+app.include_router(medical_record_apis.router)
 
 @app.get(path="/healthcheck", status_code=200, include_in_schema=False)
 async def healthcheck():
