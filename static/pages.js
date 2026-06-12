@@ -93,7 +93,7 @@ const pages = {
 
         // 수정 폼 초기값 설정
         document.getElementById('update-name').value = patient.name;
-        document.getElementById('update-phone').value = utils.formatPhoneNumber(patient.phone_number);
+        document.getElementById('update-phone').value = utils.formatPhoneNumber(patient.phone);
 
         const updatePhoneInput = document.getElementById('update-phone');
         if (updatePhoneInput) {
@@ -373,7 +373,7 @@ const pages = {
             name: document.getElementById('name').value,
             age: parseInt(document.getElementById('age').value),
             gender: document.getElementById('gender').value,
-            phone_number: document.getElementById('phone_number').value.replace(/[^\d]/g, '')
+            phone: document.getElementById('phone_number').value.replace(/[^\d]/g, '')
         };
 
         try {
@@ -436,7 +436,7 @@ const pages = {
         const patientId = state.currentPatientId;
         const updateData = {
             name: document.getElementById('update-name').value,
-            phone_number: document.getElementById('update-phone').value.replace(/[^\d]/g, '')
+            phone: document.getElementById('update-phone').value.replace(/[^\d]/g, '')
         };
 
         try {
