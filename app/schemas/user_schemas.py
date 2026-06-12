@@ -96,3 +96,9 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+# ── 관리자 권한 변경 요청 ───────────────────────────────
+class AdminRoleUpdate(BaseModel):
+    user_id: int
+    role: RoleEnum
