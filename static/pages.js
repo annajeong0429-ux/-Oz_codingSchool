@@ -186,7 +186,14 @@ const pages = {
                 </table>
             `;
         }
+
+        // 예측 후 저장해둔 heatmap이 이 진료기록 것이면 화면에 표시
+        if (state.lastHeatmap && state.lastHeatmap.recordId == recordId) {
+            document.getElementById('heatmap-img').src = state.lastHeatmap.url;
+            document.getElementById('heatmap-wrap').style.display = 'block';
+        }
     },
+
 
     async renderMyPage() {
         const html = await utils.loadTemplate('my-page');
@@ -471,11 +478,16 @@ const pages = {
 
     async handlePredict(recordId) {
         try {
-            await apis.predictPneumonia(recordId);
+            const result = await apis.predictPneumonia(recordId);
             utils.showAlert('AI 예측이 완료되었습니다.', 'success');
+            // 예측 응답의 heatmap을 state에 저장 (목록 API엔 heatmap이 없어서)
+            if (result && result.heatmap_url) {
+                state.lastHeatmap = { recordId, url: result.heatmap_url };
+            }
             navigate(`/medical-records/${recordId}`, false);
         } catch (err) {
             utils.showAlert(`AI 예측 실패: ${err.message}`, 'error');
         }
     }
+
 };
