@@ -101,32 +101,40 @@ class GradCAM:
         self.gradients = None
         self.activations = None
 
-        # forward/backward hook 등록
-        target_layer.register_forward_hook(self._save_activation)
-        target_layer.register_full_backward_hook(self._save_gradient)
+        # forward hook만 등록 → gradient는 activation '텐서'에 직접 hook
+        # ※ register_full_backward_hook은 뒤 inplace ReLU와 충돌해서 변경 (다이님 부재 중 ran 수정)
+        self.handle = target_layer.register_forward_hook(self._save_activation)   # ★ handle 저장
 
     def _save_activation(self, module, input, output):
-        self.activations = output.detach()
+        self.activations = output
+        # ★ 예측(no_grad) 패스에선 grad가 없으므로, grad 필요한 경우에만 hook 등록
+        if output.requires_grad:
+            output.register_hook(self._save_gradient)
 
-    def _save_gradient(self, module, grad_input, grad_output):
-        self.gradients = grad_output[0].detach()
+    def _save_gradient(self, grad):
+        self.gradients = grad.detach()
 
     def generate(self, img_tensor: torch.Tensor, class_idx: int) -> np.ndarray:
         """히트맵 생성 (numpy array, 0~255)"""
-        output = self.model(img_tensor)
-        self.model.zero_grad()
-        output[0, class_idx].backward()
+        try:
+            output = self.model(img_tensor)
+            self.model.zero_grad()
+            output[0, class_idx].backward()
 
-        # 가중치 평균
-        weights = self.gradients.mean(dim=(2, 3), keepdim=True)
-        cam = (weights * self.activations).sum(dim=1, keepdim=True)
-        cam = torch.relu(cam)
+            # 가중치 평균
+            weights = self.gradients.mean(dim=(2, 3), keepdim=True)
+            cam = (weights * self.activations.detach()).sum(dim=1, keepdim=True)
+            cam = torch.relu(cam)
 
-        # 정규화
-        cam = cam.squeeze().cpu().numpy()
-        cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
-        cam = (cam * 255).astype(np.uint8)
-        return cam
+            # 정규화
+            cam = cam.squeeze().cpu().numpy()
+            cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
+            cam = (cam * 255).astype(np.uint8)
+            return cam
+        finally:
+            self.handle.remove()   # ★ 끝나면 forward hook 제거 (다음 예측에 안 남게)
+
+
 
 
 def _get_target_layer(model: nn.Module, model_type: str) -> nn.Module:
@@ -142,27 +150,37 @@ def _generate_heatmap_base64(
     img_tensor: torch.Tensor,
     model_type: str,
     class_idx: int,
-    original_size: tuple
+    original_image: Image.Image,   # ← original_size(크기) 대신 '원본 이미지'를 받음
 ) -> str:
     """
-    Grad-CAM 히트맵 생성 후 base64 인코딩된 PNG 문자열 반환
+    Grad-CAM 히트맵에 jet 컬러맵을 입히고 원본 X-ray 위에 겹쳐
+    base64 인코딩된 PNG 문자열 반환
     실제 서비스에서는 S3 등에 업로드 후 URL 반환
     """
     target_layer = _get_target_layer(model, model_type)
     grad_cam = GradCAM(model, target_layer)
 
-    # 히트맵 생성
+    # 1) 히트맵(0~255 흑백) 생성 → 원본 크기로 리사이즈
     cam = grad_cam.generate(img_tensor, class_idx)
+    cam = np.array(Image.fromarray(cam).resize(original_image.size, Image.BILINEAR))
 
-    # 원본 이미지 크기로 리사이즈
-    cam_img = Image.fromarray(cam).resize(original_size, Image.BILINEAR)
+    # 2) jet 컬러맵 적용 (흑백 → 컬러 RGB)
+    x = cam.astype(np.float32) / 255.0
+    r = np.clip(1.5 - np.abs(4 * x - 3), 0, 1)
+    g = np.clip(1.5 - np.abs(4 * x - 2), 0, 1)
+    b = np.clip(1.5 - np.abs(4 * x - 1), 0, 1)
+    heatmap_img = Image.fromarray((np.stack([r, g, b], -1) * 255).astype(np.uint8))
 
-    # base64 인코딩
+    # 3) 원본 X-ray(RGB) 위에 50% 투명도로 겹치기
+    overlay = Image.blend(original_image.convert("RGB"), heatmap_img, alpha=0.5)
+
+    # 4) base64 인코딩
     buffer = io.BytesIO()
-    cam_img.save(buffer, format="PNG")
+    overlay.save(buffer, format="PNG")
     heatmap_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
     return f"data:image/png;base64,{heatmap_b64}"
+
 
 
 # ── 6. 예측 함수 ──────────────────────────────────────────────────
@@ -227,7 +245,7 @@ def predict_pneumonia(image_bytes: bytes) -> dict:
         img_tensor_grad = val_tf(image).unsqueeze(0).to(DEVICE)
         img_tensor_grad.requires_grad_(True)
         heatmap_url = _generate_heatmap_base64(
-            best_model, img_tensor_grad, model_type, class_idx, original_size
+            best_model, img_tensor_grad, model_type, class_idx, image
         )
     except Exception as e:
         print(f"Grad-CAM 생성 실패: {e}")

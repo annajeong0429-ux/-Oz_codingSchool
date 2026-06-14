@@ -8,7 +8,7 @@ const pages = {
         if (state.currentPage !== '/' && state.currentPage !== '/home') return;
         const app = document.getElementById('app');
         app.innerHTML = html;
-        
+
         const actions = document.getElementById('home-actions');
         if (!state.user) {
             actions.innerHTML = '<button onclick="navigate(\'/login\')">로그인하여 시작하기</button>';
@@ -27,7 +27,7 @@ const pages = {
     async renderSignup() {
         const html = await utils.loadTemplate('signup');
         document.getElementById('app').innerHTML = html;
-        
+
         const phoneInput = document.getElementById('signup-phone');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => utils.handlePhoneInput(e));
@@ -51,7 +51,7 @@ const pages = {
         if (genderSelect && params.gender) genderSelect.value = params.gender;
         if (minAgeInput && params.min_age) minAgeInput.value = params.min_age;
         if (maxAgeInput && params.max_age) maxAgeInput.value = params.max_age;
-        
+
         const listBody = document.getElementById('patients-list');
         if (patients.length === 0) {
             listBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">검색 결과가 없습니다.</td></tr>';
@@ -63,7 +63,7 @@ const pages = {
                 <td>${p.name}</td>
                 <td>${p.age}</td>
                 <td>${p.gender === 'male' ? '남성' : '여성'}</td>
-                <td>${utils.formatPhoneNumber(p.phone_number)}</td>
+                <td>${utils.formatPhoneNumber(p.phone)}</td>
                 <td><button onclick="navigate('/patients/${p.id}')">상세보기</button></td>
             </tr>
         `).join('');
@@ -72,7 +72,7 @@ const pages = {
     async renderPatientCreate() {
         const html = await utils.loadTemplate('patient-create');
         document.getElementById('app').innerHTML = html;
-        
+
         const phoneInput = document.getElementById('phone_number');
         if (phoneInput) {
             phoneInput.addEventListener('input', (e) => utils.handlePhoneInput(e));
@@ -86,23 +86,23 @@ const pages = {
         if (!state.currentPage.startsWith('/patients/')) return;
         const app = document.getElementById('app');
         app.innerHTML = html;
-        
+
         // 환자 정보 표시
         document.getElementById('patient-name').innerText = `${patient.name} (${patient.gender === 'male' ? '남성' : '여성'})`;
-        document.getElementById('patient-info').innerText = `나이: ${patient.age}세 | 연락처: ${utils.formatPhoneNumber(patient.phone_number)}`;
-        
+        document.getElementById('patient-info').innerText = `나이: ${patient.age}세 | 연락처: ${utils.formatPhoneNumber(patient.phone)}`;
+
         // 수정 폼 초기값 설정
         document.getElementById('update-name').value = patient.name;
-        document.getElementById('update-phone').value = utils.formatPhoneNumber(patient.phone_number);
-        
+        document.getElementById('update-phone').value = utils.formatPhoneNumber(patient.phone);
+
         const updatePhoneInput = document.getElementById('update-phone');
         if (updatePhoneInput) {
             updatePhoneInput.addEventListener('input', (e) => utils.handlePhoneInput(e));
         }
-        
+
         // 버튼 이벤트 바인딩
         document.getElementById('add-record-btn').onclick = () => navigate(`/patients/${patientId}/medical-records/create`);
-        
+
         // 상세 페이지 전용 상태 (ID 저장)
         state.currentPatientId = patientId;
 
@@ -122,7 +122,7 @@ const pages = {
         const html = await utils.loadTemplate('record-create');
         const app = document.getElementById('app');
         app.innerHTML = html;
-        
+
         const imageInput = document.getElementById('xray_image');
         const previewContainer = document.getElementById('image-preview-container');
 
@@ -149,16 +149,16 @@ const pages = {
         const html = await utils.loadTemplate('record-detail');
         const app = document.getElementById('app');
         app.innerHTML = html;
-        
+
         document.getElementById('record-id').innerText = record.id;
         document.getElementById('chart-number').innerText = record.chart_number;
         document.getElementById('symptoms-text').innerText = record.symptoms;
         document.getElementById('created-at').innerText = new Date(record.created_at).toLocaleString();
         document.getElementById('xray-img').src = record.xray_image_url;
-        
+
         document.getElementById('predict-btn').onclick = () => this.handlePredict(recordId);
         document.getElementById('back-to-patient-btn').onclick = () => navigate(`/patients/${record.patient_id}`);
-        
+
         const analysisList = document.getElementById('analysis-list');
         if (analyses.length === 0) {
             analysisList.innerHTML = '<p>저장된 예측 결과가 없습니다.</p>';
@@ -186,7 +186,14 @@ const pages = {
                 </table>
             `;
         }
+
+        // 예측 후 저장해둔 heatmap이 이 진료기록 것이면 화면에 표시
+        if (state.lastHeatmap && state.lastHeatmap.recordId == recordId) {
+            document.getElementById('heatmap-img').src = state.lastHeatmap.url;
+            document.getElementById('heatmap-wrap').style.display = 'block';
+        }
     },
+
 
     async renderMyPage() {
         const html = await utils.loadTemplate('my-page');
@@ -204,7 +211,7 @@ const pages = {
         // 수정 폼 초기값 설정
         document.getElementById('update-me-department').value = state.user.department;
         document.getElementById('update-me-phone').value = utils.formatPhoneNumber(state.user.phone_number);
-        
+
         const mePhoneInput = document.getElementById('update-me-phone');
         if (mePhoneInput) {
             mePhoneInput.addEventListener('input', (e) => utils.handlePhoneInput(e));
@@ -258,11 +265,11 @@ const pages = {
     handleAdminSearch() {
         const query = document.getElementById('admin-search-query').value;
         const department = document.getElementById('admin-filter-dept').value;
-        
+
         const params = new URLSearchParams();
         if (query) params.set('query', query);
         if (department) params.set('department', department);
-        
+
         const queryString = params.toString();
         const path = '/admin/users' + (queryString ? '?' + queryString : '');
         navigate(path);
@@ -373,9 +380,9 @@ const pages = {
             name: document.getElementById('name').value,
             age: parseInt(document.getElementById('age').value),
             gender: document.getElementById('gender').value,
-            phone_number: document.getElementById('phone_number').value.replace(/[^\d]/g, '')
+            phone: document.getElementById('phone_number').value.replace(/[^\d]/g, '')
         };
-        
+
         try {
             await apis.createPatient(patientData);
             utils.showAlert('환자가 등록되었습니다.', 'success');
@@ -413,6 +420,7 @@ const pages = {
         formData.append('chart_number', document.getElementById('chart_number').value);
         formData.append('symptoms', document.getElementById('symptoms').value);
         formData.append('xray_image', document.getElementById('xray_image').files[0]);
+        formData.append('shooting_datetime', new Date().toISOString()); // ← 이 줄 추가!
 
         try {
             await apis.createMedicalRecord(formData);
@@ -422,7 +430,6 @@ const pages = {
             utils.showAlert(`진료 기록 등록 실패: ${err.message}`, 'error');
         }
     },
-
     openUpdateModal() {
         document.getElementById('update-modal').classList.add('show');
     },
@@ -436,7 +443,7 @@ const pages = {
         const patientId = state.currentPatientId;
         const updateData = {
             name: document.getElementById('update-name').value,
-            phone_number: document.getElementById('update-phone').value.replace(/[^\d]/g, '')
+            phone: document.getElementById('update-phone').value.replace(/[^\d]/g, '')
         };
 
         try {
@@ -471,11 +478,16 @@ const pages = {
 
     async handlePredict(recordId) {
         try {
-            await apis.predictPneumonia(recordId);
+            const result = await apis.predictPneumonia(recordId);
             utils.showAlert('AI 예측이 완료되었습니다.', 'success');
+            // 예측 응답의 heatmap을 state에 저장 (목록 API엔 heatmap이 없어서)
+            if (result && result.heatmap_url) {
+                state.lastHeatmap = { recordId, url: result.heatmap_url };
+            }
             navigate(`/medical-records/${recordId}`, false);
         } catch (err) {
             utils.showAlert(`AI 예측 실패: ${err.message}`, 'error');
         }
     }
+
 };
