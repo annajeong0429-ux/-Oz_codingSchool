@@ -11,15 +11,14 @@ from app.apis import user_apis
 from app.apis import patient_apis       
 from app.apis import ai_analysis_apis   
 from app.apis import medical_record_apis
-from app.worker.model import load_models
 
 
 # 서버 시작/종료 이벤트 관리
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 서버 시작 시 모델 로딩
-    load_models()
+    # 모델 로딩은 별도 AI 워커가 담당 (FastAPI는 torch/모델 미사용)
     yield
+
     # 서버 종료 시 (필요시 정리 작업)
 
 app = FastAPI(lifespan=lifespan)
