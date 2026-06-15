@@ -38,7 +38,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"           # 호스트에서 확인용 (선택)
+    volumes:
+      - redis_volume:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
 volumes:
   mysql_volume:
   media_volume:
+  redis_volume:
+
 
