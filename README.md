@@ -126,6 +126,7 @@ Team Rule 수립부터 AI 워커 비동기 아키텍처 설계까지 단계별 �
 | 7일차 | 프론트엔드 API 연결 및 앱 실행화면 | [docs/7일차_앱_실행화면.md](docs/7일차_앱_실행화면.md) |
 | 8일차 | Docker 컨테이너화 (Dockerfile, docker-compose, Redis 통합) | 이미지 캡처: [docs/images/](docs/images/) |
 | 9일차 | 동시성 문제 해결 — Redis 작업 큐 + AI 워커 분리 아키텍처 설계 | [docs/9일차_동시성문제_해결을위한_아키텍처설계.md](docs/9일차_동시성문제_해결을위한_아키텍처설계.md) |
+| QA | Swagger UI 수동 테스트 (201 신규·200 캐시·404·422) + Docker e2e 예측 흐름 검증 | [docs/images/](docs/images/) |
 | AWS 배포 | _(미진행)_ | — |
 
 ---
