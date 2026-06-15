@@ -21,11 +21,15 @@ def get_redis() -> redis.Redis:
 
 def dequeue(queue_name: str, timeout: int = 5) -> dict | None:
     """큐에서 작업 1개를 꺼냄. timeout초 동안 대기 후 없으면 None 반환."""
-    result = get_redis().brpop(queue_name, timeout=timeout)
+    try:
+        result = get_redis().brpop(queue_name, timeout=timeout)
+    except redis.exceptions.TimeoutError:
+        return None   # 큐 비어 소켓 타임아웃 → 작업 없음으로 간주(다시 폴링)
     if result is None:
         return None
     _, raw = result
     return json.loads(raw)
+
 
 
 def publish_result(task_id: str, payload: dict) -> None:
