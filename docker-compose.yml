@@ -16,7 +16,8 @@ services:
     environment:
       - DB_HOST=mysql   # ④ 컨테이너에선 'mysql' 서비스명으로 DB 접속
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     healthcheck:
       # ② slim엔 curl이 없어서 python 표준 라이브러리로 체크
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck')"]
