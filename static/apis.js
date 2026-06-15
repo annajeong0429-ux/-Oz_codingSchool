@@ -26,14 +26,14 @@ const apis = {
 
         try {
             const response = await fetch(`${API_BASE}${url}`, { ...options, headers });
-            
+
             // 401 Unauthorized 처리 (토큰 만료 시 리프레시 시도)
             if (response.status === 401) {
                 // 로그인 요청에서 401은 리프레시 대상이 아님
                 if (url === '/users/login') {
                     return { status: 401 };
                 }
-                
+
                 // 토큰이 없는 경우 리프레시 시도 없이 로그아웃
                 if (!state.token) {
                     await logout();
@@ -61,10 +61,10 @@ const apis = {
                         const data = await refreshResponse.json();
                         state.token = data.access_token;
                         localStorage.setItem('token', state.token);
-                        
+
                         this.isRefreshing = false;
                         this.onTokenRefreshed(state.token);
-                        
+
                         // 원래 요청 재시도
                         headers['Authorization'] = `Bearer ${state.token}`;
                         return await this.request(url, options, skipAlert);
@@ -80,7 +80,7 @@ const apis = {
                     return null;
                 }
             }
-            
+
             if (!response.ok) {
                 let error;
                 try {
@@ -88,7 +88,7 @@ const apis = {
                 } catch (e) {
                     error = { detail: '서버 응답 처리 중 오류가 발생했습니다.' };
                 }
-                
+
                 let msg = error.detail || '요청 중 오류가 발생했습니다.';
                 if (Array.isArray(msg)) {
                     msg = msg.map(e => {
@@ -266,7 +266,8 @@ const apis = {
      * [REQ-MDR-001] 사내 의료인 역할을 가진 유저만 환자의 진료 기록을 등록할 수 있다.
      */
     async createMedicalRecord(formData) {
-        return await this.request('/medical-records', {
+        const patientId = formData.get('patient_id');
+        return await this.request(`/patients/${patientId}/medical-records`, {
             method: 'POST',
             body: formData
         });
@@ -295,7 +296,7 @@ const apis = {
      * [REQ-PRED-001] 진료기록에 등록된 X-ray 이미지를 활용하여 폐렴 여부를 예측한다.
      */
     async predictPneumonia(recordId) {
-        return await this.request(`/medical-records/${recordId}/predict`, { method: 'POST' });
+        return await this.request(`/medical-records/${recordId}/ai-analysis`, { method: 'POST' });
     },
 
     /**
@@ -303,9 +304,8 @@ const apis = {
      * [REQ-PRED-002] 특정 진료기록에 대해 수행된 모든 AI 예측 결과 목록을 조회한다.
      */
     async getMedicalRecordAnalyses(recordId) {
-        return await this.request(`/medical-records/${recordId}/analyses`);
+        return await this.request(`/medical-records/${recordId}/ai-analysis`);
     },
-
     // --- Admin ---
 
     /**

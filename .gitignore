@@ -27,3 +27,10 @@ _*
 
 # Don't ignore the .gitignore file itself
 !.gitignore
+!.dockerignore
+
+# AI 모델 가중치 파일
+*.pth
+
+# xray 업로드 폴더 무시
+media/xray/

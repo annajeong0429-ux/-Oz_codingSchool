@@ -1,18 +1,22 @@
-# syntax=docker/dockerfile:1
+# worker/Dockerfile
+# app/Dockerfile과 같은 베이스 이미지 사용 (model.py 공유)
 FROM python:3.12-slim
 
-# torch가 OpenMP(libgomp)를 필요로 해서 추가 (없으면 import torch 시 에러)
+# torch OpenMP + asyncmy 컴파일 의존성
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
+
 COPY . .
+
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH=/app
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["python", "worker/main.py"]
