@@ -3,40 +3,42 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
-    entrypoint: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    # 로컬 개발용 --reload (코드 수정 즉시 반영)
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app
-      - static_volume:/app/static
-      - media_volume:/app/media
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthcheck || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
+      - .:/app          # ① 프로젝트 전체를 /app에 마운트 → 코드 수정 즉시 반영
+      - /app/.venv      # ② 컨테이너 .venv 보호 (호스트 macOS venv로 안 덮이게)
+      - media_volume:/app/media # ⭐ 업로드된 X-ray를 볼륨에 영구저장
+    env_file:
+      - .env            # DB_USER/PASSWORD/NAME/PORT 주입
+    environment:
+      - DB_HOST=mysql   # ④ 컨테이너에선 'mysql' 서비스명으로 DB 접속
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      # ② slim엔 curl이 없어서 python 표준 라이브러리로 체크
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mysql:
     image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}   # ③ 앱이 root로 접속 → root 비번 = DB_PASSWORD
+      MYSQL_DATABASE: ${DB_NAME}            # 시작 시 이 DB 자동 생성
     volumes:
       - mysql_volume:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PORT: ${DB_PORT}
-    ports:
-      - "${DB_PORT}:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-
 
 volumes:
   mysql_volume:
-  static_volume:
   media_volume:
+
