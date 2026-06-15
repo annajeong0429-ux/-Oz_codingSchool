@@ -15,8 +15,11 @@ services:
       - .env            # DB_USER/PASSWORD/NAME/PORT 주입
     environment:
       - DB_HOST=mysql   # ④ 컨테이너에선 'mysql' 서비스명으로 DB 접속
+      - REDIS_URL=redis://redis:6379/0   # 작업 큐 + 결과 Pub/Sub
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       # ② slim엔 curl이 없어서 python 표준 라이브러리로 체크
@@ -50,6 +53,22 @@ services:
       timeout: 3s
       retries: 5
 
+  ai-worker:                              # 소비자(Consumer) — 정인님 worker/Dockerfile
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    volumes:
+      - .:/app
+      - /app/.venv
+      - media_volume:/app/media           # api가 저장한 X-ray를 worker가 읽음
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1        # ← print 출력 즉시 flush (워커 로그 보이게)
+    depends_on:
+      redis:
+        condition: service_healthy
 
 volumes:
   mysql_volume:

@@ -10,7 +10,7 @@ import logging
 import sys
 
 # PYTHONPATH=/app 덕분에 app 패키지 import 가능
-from app.worker.model import predict_pneumonia
+from app.worker.model import predict_pneumonia, load_models
 from worker.redis_client import dequeue, publish_result
 
 logging.basicConfig(
@@ -56,10 +56,11 @@ def process(task: dict) -> None:
 
 def main() -> None:
     log.info("AI 워커 시작 — 큐: %s", QUEUE_NAME)
+    load_models()                # ★ 모델 로딩 (워커가 추론하므로 필수)
     while True:
         task = dequeue(QUEUE_NAME, timeout=5)
         if task is None:
-            continue  # 대기 중 (타임아웃) → 다시 대기
+            continue
         process(task)
 
 
