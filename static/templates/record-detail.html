@@ -14,15 +14,22 @@
     </div>
 
     <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #eee;">
-    
+
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3>AI 폐렴 예측 결과</h3>
         <button id="predict-btn">AI 예측 결과보기</button>
     </div>
-    
+
     <div id="analysis-list">
         <!-- JS로 채워짐 -->
     </div>
-    
+
+    <div id="heatmap-wrap" style="display: none; margin-top: 1.5rem;">
+        <p><strong>AI 주목 영역 (Grad-CAM 히트맵):</strong></p>
+        <img id="heatmap-img" src="" alt="Grad-CAM Heatmap" style="max-width: 100%; border-radius: 8px;">
+        <p style="color: #888; font-size: 0.85rem;">밝은(붉은) 영역일수록 모델이 폐렴 판단 시 주목한 부위입니다.</p>
+    </div>
+
     <button id="back-to-patient-btn" class="secondary" style="margin-top: 1rem;">진료 목록으로</button>
+
 </div>
