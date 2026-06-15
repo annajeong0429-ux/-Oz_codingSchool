@@ -49,10 +49,15 @@
 
 프로젝트 루트에 `.env` 파일을 생성하세요.
 
+`.env.example`을 복사해서 값을 채워주세요.
+
+```bash
+cp .env.example .env
+```
+
 ```env
 DB_USER=root
 DB_PASSWORD=your_password
-DB_ROOT_PASSWORD=your_password
 DB_NAME=ai_health
 DB_HOST=localhost
 DB_PORT=3306
@@ -62,7 +67,7 @@ JWT_SECRET_KEY=your-secret-key-here
 REDIS_URL=redis://localhost:6379/0
 ```
 
-> Docker Compose로 실행할 경우 `DB_HOST=mysql`, `REDIS_URL=redis://redis:6379/0` 으로 설정됩니다 (compose에서 자동 주입).
+> Docker Compose로 실행할 경우 `DB_HOST=mysql`, `REDIS_URL=redis://redis:6379/0` 으로 자동 주입됩니다.
 
 ---
 
@@ -103,6 +108,25 @@ fastapi run app/main.py
 # 5. AI 워커 실행 (별도 터미널)
 python worker/main.py
 ```
+
+---
+
+## 프로젝트 진행 과정
+
+Team Rule 수립부터 AI 워커 비동기 아키텍처 설계까지 단계별 학습·구현 내용을 정리합니다.
+
+| 일차 | 주제 | 문서 |
+|------|------|------|
+| 1일차 | 팀 규칙 수립 (코어타임, Git 브랜치 전략, 커밋 컨벤션) | [docs/1일차_우당탕탕team_rules.md](docs/1일차_우당탕탕team_rules.md) |
+| 2일차 | Git Flow / GitHub Flow 비교 및 팀 하이브리드 브랜치 전략 확정 | [docs/2일차_git_branch_전략_최종 (1).md](<docs/2일차_git_branch_전략_최종 (1).md>) |
+| 3일차 | 프로젝트 구조 분석 (FastAPI, SQLAlchemy, Alembic, Docker) | [docs/3일차_프로젝트_뜯어보기.md](docs/3일차_프로젝트_뜯어보기.md) |
+| 4일차 | User API 설계 (회원가입/로그인/JWT/관리자 권한) | [docs/4일차_USER_API_설계.md](docs/4일차_USER_API_설계.md) |
+| 5일차 | 환자·진료기록 API 설계 (CRUD, X-Ray 업로드) | [docs/5일차_환자관리_API_설계.md](docs/5일차_환자관리_API_설계.md) |
+| 6일차 | AI 폐렴 예측 API 설계 (캐싱, run_in_threadpool 한계 분석) | [docs/6일차_AI_폐렴예측_API설계.md](docs/6일차_AI_폐렴예측_API설계.md) |
+| 7일차 | 프론트엔드 API 연결 및 앱 실행화면 | [docs/7일차_앱_실행화면.md](docs/7일차_앱_실행화면.md) |
+| 8일차 | Docker 컨테이너화 (Dockerfile, docker-compose, Redis 통합) | 이미지 캡처: [docs/images/](docs/images/) |
+| 9일차 | 동시성 문제 해결 — Redis 작업 큐 + AI 워커 분리 아키텍처 설계 | [docs/9일차_동시성문제_해결을위한_아키텍처설계.md](docs/9일차_동시성문제_해결을위한_아키텍처설계.md) |
+| AWS 배포 | _(미진행)_ | — |
 
 ---
 
